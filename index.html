@@ -1,5 +1,1174 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow"><title>Ставки Polymarket</title></head>
-<body style="font:15px system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;color:#52514e">
-Сайт появится после первой сборки.</body></html>
+<html lang="ru">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ставки Polymarket</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --surface-2: #f3f2ee;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --pos: #2a78d6; --neg: #e34948;
+  --up: #006300; --down: #d03b3b;
+  --good: #0ca30c; --crit: #d03b3b; --warn: #fab219;
+  --accent-wash: rgba(42,120,214,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --pos: #3987e5; --neg: #e66767;
+    --up: #0ca30c; --down: #e66767;
+    --accent-wash: rgba(57,135,229,0.16);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+  --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --pos: #3987e5; --neg: #e66767;
+  --up: #0ca30c; --down: #e66767;
+  --accent-wash: rgba(57,135,229,0.16);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 20px 16px 60px; }
+header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+header h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+.sub { color: var(--muted); font-size: 13px; }
+.grow { flex: 1; }
+button, select, input { font: inherit; color: var(--ink); }
+.btn { background: var(--surface); border: 1px solid var(--ring); border-radius: 8px;
+  padding: 6px 12px; cursor: pointer; }
+.btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--grid); margin-bottom: 16px;
+  overflow-x: auto; }
+nav.tabs button { background: none; border: 0; padding: 10px 14px; cursor: pointer;
+  color: var(--ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+nav.tabs button.on { color: var(--ink); border-color: var(--s1); font-weight: 600; }
+nav.tabs .cnt { color: var(--muted); font-size: 12px; margin-left: 4px; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  background: var(--surface); border: 1px solid var(--ring); border-radius: 12px;
+  padding: 10px 12px; margin-bottom: 16px; }
+.filters label { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
+.filters select, .filters input { background: var(--page); border: 1px solid var(--ring);
+  border-radius: 7px; padding: 5px 8px; min-width: 0; }
+.filters input[type=number] { width: 64px; }
+.filters input[type=date] { width: 136px; }
+.filters input[type=search] { width: 180px; }
+.seg { display: inline-flex; border: 1px solid var(--ring); border-radius: 8px; overflow: hidden; }
+.seg button { background: var(--page); border: 0; padding: 5px 10px; cursor: pointer; color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--ring); }
+.seg button.on { background: var(--accent-wash); color: var(--ink); font-weight: 600; }
+.reset { color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.tile { background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 14px 16px; }
+.tile .lbl { color: var(--ink-2); font-size: 13px; }
+.tile .val { font-size: 24px; font-weight: 650; margin-top: 2px; letter-spacing: -0.01em; }
+.tile .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.tile.hero { grid-column: span 2; }
+.tile.hero .val { font-size: 48px; line-height: 1.05; }
+@media (max-width: 560px) { .tile.hero { grid-column: span 1; } .tile.hero .val { font-size: 38px; } }
+.up { color: var(--up); } .down { color: var(--down); }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; min-width: 0; }
+.card h3 { margin: 0 0 2px; font-size: 15px; font-weight: 600; }
+.card .sub { margin-bottom: 10px; }
+.chart { position: relative; height: 280px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin-bottom: 6px; }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.legend i.sq { height: 10px; width: 10px; }
+
+.calib { font-size: 13px; color: var(--ink-2); }
+.calib b { color: var(--ink); }
+.verdict { display: inline-flex; gap: 6px; align-items: center; padding: 3px 9px; border-radius: 99px;
+  font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--ink); margin-top: 6px; }
+
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { color: var(--ink-2); font-weight: 600; font-size: 12px; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--surface); }
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+th .ar { color: var(--muted); font-size: 10px; }
+tbody tr:hover { background: var(--surface-2); }
+td .m { font-weight: 550; max-width: 280px; overflow: hidden; text-overflow: ellipsis; display: block; }
+td .s { color: var(--muted); font-size: 12px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; display: block; }
+td a { color: inherit; text-decoration: none; }
+td a:hover { text-decoration: underline; }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; }
+.badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+.src { font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--ring); color: var(--ink-2); }
+.src.bot { background: var(--accent-wash); color: var(--ink); }
+.pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 10px; color: var(--ink-2); font-size: 13px; }
+.bar { height: 8px; border-radius: 4px; display: inline-block; vertical-align: middle; }
+.barcell { width: 140px; }
+.empty { color: var(--muted); padding: 30px; text-align: center; }
+.loading { padding: 80px 20px; text-align: center; color: var(--ink-2); }
+.warn { background: var(--surface-2); border-left: 3px solid var(--warn); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
+.hidden { display: none !important; }
+.btn.primary { background: var(--s1); color: #fff; border-color: transparent; font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); background: var(--s1); }
+.btn.big { padding: 10px 18px; font-size: 15px; }
+.fh-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.fh-status { color: var(--ink-2); font-size: 13px; flex: 1; min-width: 240px; }
+.fh-status b { color: var(--ink); }
+.fh-settings { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--grid); font-size: 13px; color: var(--ink-2); align-items: center; }
+.fh-settings label { display: inline-flex; align-items: center; gap: 6px; }
+.fh-settings input[type=number], .fd-actions input[type=number] { width: 72px; background: var(--page);
+  border: 1px solid var(--ring); border-radius: 7px; padding: 4px 7px; }
+.fd-actions { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-top: 12px;
+  font-size: 13px; color: var(--ink-2); }
+.fd-actions label { display: inline-flex; align-items: center; gap: 6px; }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--grid);
+  border-top-color: var(--s1); border-radius: 50%; animation: sp .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.res { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--grid); font-size: 13px; }
+.res .t { color: var(--muted); white-space: nowrap; }
+.res .n { font-weight: 550; }
+.res .x { color: var(--ink-2); }
+input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--s1); cursor: pointer; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center;
+  justify-content: center; z-index: 20; padding: 16px; }
+.modal-box { background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; padding: 20px;
+  max-width: 560px; width: 100%; max-height: 85vh; overflow: auto; }
+.modal-box h3 { margin: 0 0 10px; font-size: 17px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.mline { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; border-bottom: 1px solid var(--grid); }
+.mline span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* телефон: таблицы ставок превращаются в карточки */
+@media (max-width: 640px) {
+  .wrap { padding: 14px 12px 40px; }
+  header { gap: 10px; margin-bottom: 10px; }
+  header h1 { font-size: 18px; }
+  table.cards thead { display: none; }
+  table.cards, table.cards tbody { display: block; }
+  table.cards tr { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 10px;
+    padding: 12px 2px; border-bottom: 1px solid var(--grid); }
+  table.cards td { border: 0; padding: 0; white-space: normal; text-align: left; min-width: 0; }
+  table.cards td[data-l]::before { content: attr(data-l); display: block; color: var(--muted);
+    font-size: 11px; font-weight: 400; }
+  table.cards td.wide { grid-column: 1 / -1; order: -1; }
+  table.cards td.wide::before { display: none !important; }
+  table.cards td .m, table.cards td .s { max-width: none; white-space: normal; }
+  table.cards td .m { font-size: 15px; }
+  table.cards td[colspan] { grid-column: 1 / -1; }
+  table.cards.has-chk tr { grid-template-columns: 32px 1fr 1fr 1fr; }
+  table.cards.has-chk td.chk { grid-column: 1; grid-row: 1 / span 4; order: -2; padding-top: 2px; }
+  table.cards.has-chk td.chk::before { display: none; }
+  table.cards.has-chk td.wide { grid-column: 2 / -1; }
+  table.cards.has-chk input[type=checkbox] { width: 20px; height: 20px; }
+  tbody tr:hover { background: none; }
+  .fd-actions { position: sticky; bottom: 0; background: var(--surface); padding: 10px 0 4px;
+    border-top: 1px solid var(--grid); }
+  .fd-actions .btn { flex: 1 1 auto; padding: 10px 12px; }
+  .btn.big { width: 100%; }
+  .modal-box { padding: 16px; }
+  .tile.hero .val { font-size: 34px; }
+  #filters:not(.open) > *:not(.ftoggle) { display: none !important; }
+  #filters .ftoggle { display: block; width: 100%; text-align: left; }
+}
+.ftoggle { display: none; background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--ink); font-weight: 600; }
+.login { position: fixed; inset: 0; background: var(--page); display: flex; align-items: center;
+  justify-content: center; z-index: 30; padding: 16px; }
+.login form { background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; padding: 24px;
+  width: 100%; max-width: 340px; }
+.login h3 { margin: 0 0 4px; font-size: 19px; }
+.login input[type=password] { width: 100%; background: var(--page); border: 1px solid var(--ring);
+  border-radius: 9px; padding: 11px 12px; margin: 14px 0 10px; }
+.login label { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); margin-bottom: 14px; }
+.login .btn { width: 100%; padding: 11px; }
+.login .err { color: var(--down); font-size: 13px; min-height: 18px; margin-bottom: 6px; }
+body.static .srv-only { display: none !important; }
+body:not(.static) .static-only { display: none !important; }
+.pm-link { display: inline-block; padding: 5px 10px; border-radius: 7px; background: var(--s1); color: #fff !important;
+  font-weight: 600; font-size: 12px; text-decoration: none !important; white-space: nowrap; }
+.tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--ring);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.12); z-index: 10; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Ставки Polymarket</h1>
+      <div class="sub" id="meta">загрузка…</div>
+    </div>
+    <div class="grow"></div>
+    <button class="btn" id="refresh" title="Запросить свежие данные со счёта">↻ Обновить</button>
+    <button class="btn" id="theme" title="Светлая / тёмная тема">◐</button>
+    <a class="btn" id="logout" href="/logout" title="Выйти" style="text-decoration:none;color:var(--ink)">Выйти</a>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="finder">Найти ставки<span class="cnt" id="c-finder"></span></button>
+    <button data-tab="overview">Обзор</button>
+    <button data-tab="history">Прошлые ставки<span class="cnt" id="c-history"></span></button>
+    <button data-tab="upcoming">Предстоящие<span class="cnt" id="c-upcoming"></span></button>
+    <button data-tab="slices">Срезы</button>
+  </nav>
+
+  <div class="filters" id="filters">
+    <button class="ftoggle" id="f-toggle">Фильтры</button>
+    <label>Период
+      <select id="f-period">
+        <option value="all">всё время</option>
+        <option value="7">7 дней</option>
+        <option value="30">30 дней</option>
+        <option value="90">90 дней</option>
+        <option value="custom">свой…</option>
+      </select>
+    </label>
+    <span id="f-custom" class="hidden" style="display:inline-flex;gap:6px;align-items:center">
+      <input type="date" id="f-from"> — <input type="date" id="f-to">
+    </span>
+    <span class="seg" id="f-source">
+      <button data-v="all" class="on">все</button><button data-v="bot">бот</button><button data-v="manual">вручную</button>
+    </span>
+    <label>Спорт <select id="f-sport"></select></label>
+    <label>Лига <select id="f-league"></select></label>
+    <label>Рынок <select id="f-type"></select></label>
+    <label>Статус
+      <select id="f-status">
+        <option value="all">любой</option>
+        <option value="closed">рассчитанные</option>
+        <option value="won">выигрыш</option>
+        <option value="lost">проигрыш</option>
+        <option value="sold">продано</option>
+        <option value="open">открытые</option>
+      </select>
+    </label>
+    <label>Цена <input type="number" id="f-pmin" step="0.05" min="0" max="1" placeholder="от">–<input type="number" id="f-pmax" step="0.05" min="0" max="1" placeholder="до"></label>
+    <label>Сумма от $ <input type="number" id="f-smin" step="1" min="0"></label>
+    <input type="search" id="f-q" placeholder="поиск: команда, рынок…">
+    <button class="reset" id="f-reset">сбросить</button>
+  </div>
+
+  <div id="loading" class="loading">Собираю историю счёта с Polymarket… первый раз это около минуты.</div>
+  <div id="stale" class="warn hidden"></div>
+
+  <!-- НАЙТИ СТАВКИ -->
+  <section id="tab-finder" class="hidden">
+    <div class="card">
+      <div class="fh-row">
+        <button class="btn primary big" id="fd-scan">Проверить ставки</button>
+        <div class="fh-status" id="fd-status">…</div>
+      </div>
+      <div class="fh-settings srv-only">
+        <label><input type="checkbox" id="fd-auto"> проверять сам каждые <input type="number" id="fd-every" min="5" step="5"> мин</label>
+        <label><input type="checkbox" id="fd-notify"> уведомлять в браузере</label>
+        <label>банк для формулы $<input type="number" id="fd-bank" min="1" step="1"></label>
+        <label>лимит на проверку $<input type="number" id="fd-budget" min="0" step="1"><span class="sub" style="margin:0">0 — без лимита</span></label>
+        <span id="fd-balance"></span>
+      </div>
+    </div>
+    <div id="fd-error" class="warn hidden"></div>
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+        <h3 style="margin:0">Найденные ставки</h3><span class="sub" id="fd-note" style="margin:0"></span>
+      </div>
+      <div class="tbl-wrap" style="margin-top:8px"><table id="t-finder" class="cards has-chk"></table></div>
+      <div class="fd-actions srv-only" id="fd-actions">
+        <span id="fd-sel"></span>
+        <label>другая сумма $<input type="number" id="fd-target" min="1" step="1"></label>
+        <button class="btn" id="fd-fit">Пересчитать</button>
+        <button class="btn" id="fd-refit">Как по формуле</button>
+        <div class="grow"></div>
+        <button class="btn" id="fd-hide">Скрыть выбранные</button>
+        <button class="btn primary" id="fd-place">Поставить выбранные</button>
+      </div>
+    </div>
+    <div class="card srv-only" id="fd-res-card">
+      <h3>Последние постановки</h3>
+      <div class="sub">перед отправкой каждая ставка сверяется со стаканом заново</div>
+      <div id="fd-results"></div>
+    </div>
+  </section>
+
+  <!-- ОБЗОР -->
+  <section id="tab-overview" class="hidden">
+    <div class="tiles" id="tiles"></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Результат нарастающим итогом</h3>
+        <div class="sub">по дням расчёта, только закрытые ставки</div>
+        <div class="legend" id="lg-equity"></div>
+        <div class="chart"><canvas id="ch-equity"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Результат по месяцам</h3>
+        <div class="sub">месяц, когда ставка сделана</div>
+        <div class="chart"><canvas id="ch-month"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Калибровка: выигрываем ли чаще, чем думает рынок</h3>
+        <div class="sub">цена входа = вероятность по мнению рынка; точка выше диагонали — выигрываем чаще</div>
+        <div class="chart"><canvas id="ch-calib"></canvas></div>
+        <div class="calib" id="calib-text"></div>
+      </div>
+      <div class="card">
+        <h3>ROI по типам рынков</h3>
+        <div class="sub">рассчитанные ставки; в скобках — сколько их</div>
+        <div class="chart"><canvas id="ch-type"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРОШЛЫЕ -->
+  <section id="tab-history" class="hidden">
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <h3 style="margin:0">Все ставки</h3><span class="sub" id="h-sum" style="margin:0"></span>
+        <div class="grow"></div>
+        <button class="btn" id="csv">Скачать CSV</button>
+      </div>
+      <div class="tbl-wrap"><table id="t-history" class="cards"></table></div>
+      <div class="pager" id="pager"></div>
+    </div>
+  </section>
+
+  <!-- ПРЕДСТОЯЩИЕ -->
+  <section id="tab-upcoming" class="hidden">
+    <div class="card">
+      <h3>Открытые позиции</h3>
+      <div class="sub">деньги в игре; текущая стоимость — по цене рынка сейчас</div>
+      <div class="tbl-wrap"><table id="t-open" class="cards"></table></div>
+    </div>
+    <div class="card">
+      <h3>Рекомендации, которые ещё не поставлены</h3>
+      <div class="sub">из последнего отчёта pm_match.py и предложений бота, на которые ты ещё не ответил. Фильтры страницы к ним не применяются.</div>
+      <div class="tbl-wrap"><table id="t-cands" class="cards"></table></div>
+    </div>
+  </section>
+
+  <!-- СРЕЗЫ -->
+  <section id="tab-slices" class="hidden">
+    <div class="filters" style="margin-bottom:12px">
+      <label>Группировать по
+        <select id="s-by">
+          <option value="month">месяцу</option>
+          <option value="week">неделе</option>
+          <option value="sport">виду спорта</option>
+          <option value="league">лиге</option>
+          <option value="type">типу рынка</option>
+          <option value="source">источнику</option>
+          <option value="price">цене входа</option>
+          <option value="stake">размеру ставки</option>
+          <option value="edge">edge модели</option>
+          <option value="weekday">дню недели</option>
+          <option value="hour">часу ставки</option>
+        </select>
+      </label>
+      <label>На графике
+        <select id="s-metric">
+          <option value="pnl">результат, $</option>
+          <option value="roi">ROI, %</option>
+          <option value="stake">оборот, $</option>
+          <option value="wr">доля выигрышей, %</option>
+          <option value="diff">перевес над рынком, п.п.</option>
+        </select>
+      </label>
+    </div>
+    <div class="card">
+      <div class="chart" id="slice-chart-box"><canvas id="ch-slice"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap"><table id="t-slice"></table></div>
+    </div>
+  </section>
+</div>
+
+<div class="login hidden" id="login"><form id="login-form" autocomplete="on">
+  <h3>Ставки Polymarket</h3>
+  <div class="sub" style="margin:0">Данные зашифрованы. Пароль проверяется у тебя в браузере и никуда не отправляется.</div>
+  <input type="password" id="login-pw" placeholder="Пароль" autocomplete="current-password" required>
+  <label><input type="checkbox" id="login-remember" checked> запомнить на этом устройстве</label>
+  <div class="err" id="login-err"></div>
+  <button class="btn primary" id="login-btn" type="submit">Открыть</button>
+</form></div>
+
+<div class="modal hidden" id="modal"><div class="modal-box">
+  <h3 id="modal-title">Поставить ставки?</h3>
+  <div id="modal-body"></div>
+  <div class="modal-actions"><button class="btn" id="modal-no">Отмена</button><button class="btn primary" id="modal-yes">Поставить</button></div>
+</div></div>
+
+<script>
+'use strict';
+const PM_TOKEN = '';
+const STATIC = 'true' === 'true';      // сборка для GitHub Pages
+if (STATIC) document.body.classList.add('static');
+// ------------------------------------------------------------------ утилиты
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('pmdash.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('pmdash.' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = (v, sign) => (v == null || isNaN(v)) ? '—' :
+  (sign && v > 0 ? '+' : v < 0 ? '−' : '') + '$' + Math.abs(v).toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const moneyShort = v => (v < 0 ? '−' : '') + '$' + Math.abs(v).toLocaleString('ru-RU', {maximumFractionDigits: 0});
+const pct = (v, d = 1, sign = true) => (v == null || !isFinite(v)) ? '—' :
+  (sign && v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(d).replace('.', ',') + '%';
+const cls = v => v > 0.004 ? 'up' : v < -0.004 ? 'down' : '';
+const fmtDate = ts => ts ? new Date(ts * 1000).toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: '2-digit'}) : '—';
+const fmtDT = iso => { if (!iso) return '—'; const d = new Date(iso); return isNaN(d) ? '—' :
+  d.toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}); };
+const monthKey = ts => { const d = new Date(ts * 1000); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const monthLabel = k => { const [y, m] = k.split('-'); return MONTHS[+m - 1] + ' ' + y.slice(2); };
+const STATUS = {
+  won:  {t: 'выигрыш',  c: '--good', i: '✓'},
+  lost: {t: 'проигрыш', c: '--crit', i: '✕'},
+  open: {t: 'открыта',  c: '--s1',   i: '●'},
+  sold: {t: 'продана',  c: '--muted', i: '↗'},
+};
+const badge = s => { const x = STATUS[s] || {t: s, c: '--muted', i: '·'};
+  return `<span class="badge"><span style="color:var(${x.c})">${x.i}</span>${x.t}</span>`; };
+const srcTag = s => s === 'bot' ? '<span class="src bot">бот</span>' : '<span class="src">вручную</span>';
+
+// ------------------------------------------------------------------ данные
+let DATA = null, BETS = [], charts = {};
+const F = Object.assign({period: 'all', from: '', to: '', source: 'all', sport: 'all', league: 'all',
+  type: 'all', status: 'all', pmin: '', pmax: '', smin: '', q: ''}, store.get('filters', {}));
+let TAB = store.get('tab', 'finder');
+let SORT = store.get('sort', {k: 'placed', d: -1});
+let PAGE = 0; const PER = 50;
+let SLICE = store.get('slice', {by: 'month', metric: 'pnl'});
+
+async function load(refresh) {
+  const btn = $('#refresh'); btn.disabled = true;
+  try {
+    const r = await fetch('/api/data' + (refresh ? '?refresh=1' : ''));
+    if (r.status === 401) { location.href = '/login'; return; }
+    const d = await r.json();
+    if (r.status === 202) {           // первая сборка ещё идёт
+      $('#loading').textContent = d.error ? 'Ошибка: ' + d.error + ' — повторяю…' :
+        'Собираю историю счёта с Polymarket… первый раз это около минуты.';
+      setTimeout(() => load(false), 4000);
+      return;
+    }
+    DATA = d; BETS = d.bets;
+    const upd = new Date(d.updated * 1000).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+    $('#meta').textContent = `${d.address.slice(0, 6)}…${d.address.slice(-4)} · ${BETS.length} позиций · обновлено в ${upd}` +
+      (d.building ? ' · обновляю…' : '');
+    const st = $('#stale');
+    if (d.stale_error) { st.textContent = 'Свежие данные получить не удалось (' + d.stale_error + '), показываю последние сохранённые.'; st.classList.remove('hidden'); }
+    else st.classList.add('hidden');
+    fillSelects(); render();
+    if (d.building || refresh) setTimeout(() => load(false), refresh ? 5000 : 8000);
+  } catch (e) {
+    $('#loading').textContent = 'Сервер дашборда не отвечает: ' + e;
+    setTimeout(() => load(false), 5000);
+  } finally { btn.disabled = false; }
+}
+
+function fillSelects() {
+  const opts = (el, vals, cur, all) => {
+    el.innerHTML = `<option value="all">${all}</option>` + vals.map(v => `<option${v === cur ? ' selected' : ''}>${esc(v)}</option>`).join('');
+    if (cur !== 'all' && !vals.includes(cur)) el.value = 'all';
+  };
+  const count = key => { const m = {}; BETS.forEach(b => m[b[key]] = (m[b[key]] || 0) + 1);
+    return Object.keys(m).sort((a, b) => m[b] - m[a]); };
+  opts($('#f-sport'), count('sport'), F.sport, 'все');
+  const lg = {}; BETS.filter(b => F.sport === 'all' || b.sport === F.sport).forEach(b => lg[b.league_short] = (lg[b.league_short] || 0) + 1);
+  opts($('#f-league'), Object.keys(lg).sort((a, b) => lg[b] - lg[a]), F.league, 'все');
+  opts($('#f-type'), count('type'), F.type, 'все');
+}
+
+function syncControls() {
+  $('#f-period').value = F.period; $('#f-from').value = F.from; $('#f-to').value = F.to;
+  $('#f-custom').classList.toggle('hidden', F.period !== 'custom');
+  document.querySelectorAll('#f-source button').forEach(b => b.classList.toggle('on', b.dataset.v === F.source));
+  $('#f-status').value = F.status; $('#f-pmin').value = F.pmin; $('#f-pmax').value = F.pmax;
+  $('#f-smin').value = F.smin; $('#f-q').value = F.q;
+  $('#s-by').value = SLICE.by; $('#s-metric').value = SLICE.metric;
+  const nf = activeFilters(), open = $('#filters').classList.contains('open');
+  $('#f-toggle').textContent = (open ? '▾ ' : '▸ ') + 'Фильтры' + (nf ? ' · активных: ' + nf : '');
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === TAB));
+  ['overview', 'history', 'upcoming', 'slices'].forEach(t => $('#tab-' + t).classList.toggle('hidden', t !== TAB || !DATA));
+  $('#tab-finder').classList.toggle('hidden', TAB !== 'finder');
+  $('#filters').classList.toggle('hidden', TAB === 'finder');
+  $('#loading').classList.toggle('hidden', !!DATA || TAB === 'finder');
+  if (TAB === 'finder') $('#stale').classList.add('hidden');
+}
+
+function activeFilters() {
+  return ['period', 'source', 'sport', 'league', 'type', 'status'].filter(k => F[k] !== 'all').length +
+    ['pmin', 'pmax', 'smin', 'q'].filter(k => String(F[k]).trim() !== '').length;
+}
+
+function filtered() {
+  const now = Date.now() / 1000;
+  let lo = -Infinity, hi = Infinity;
+  if (/^\d+$/.test(F.period)) lo = now - (+F.period) * 86400;
+  if (F.period === 'custom') {
+    if (F.from) lo = new Date(F.from + 'T00:00').getTime() / 1000;
+    if (F.to) hi = new Date(F.to + 'T23:59:59').getTime() / 1000;
+  }
+  const q = F.q.trim().toLowerCase();
+  const pmin = F.pmin === '' ? -1 : +F.pmin, pmax = F.pmax === '' ? 2 : +F.pmax, smin = F.smin === '' ? 0 : +F.smin;
+  return BETS.filter(b => b.placed >= lo && b.placed <= hi
+    && (F.source === 'all' || b.source === F.source)
+    && (F.sport === 'all' || b.sport === F.sport)
+    && (F.league === 'all' || b.league_short === F.league)
+    && (F.type === 'all' || b.type === F.type)
+    && (F.status === 'all' || (F.status === 'closed' ? b.status !== 'open' : b.status === F.status))
+    && (b.price == null || (b.price >= pmin && b.price <= pmax))
+    && b.stake >= smin
+    && (!q || (b.match + ' ' + b.title + ' ' + b.selection + ' ' + b.league).toLowerCase().includes(q)));
+}
+
+// Сводные показатели группы ставок
+function stats(list) {
+  const closed = list.filter(b => b.status === 'won' || b.status === 'lost');
+  const won = closed.filter(b => b.status === 'won').length;
+  const stake = list.reduce((s, b) => s + b.stake, 0);
+  const pnl = list.reduce((s, b) => s + b.pnl, 0);
+  const settledStake = list.filter(b => b.status !== 'open').reduce((s, b) => s + b.stake, 0);
+  const settledPnl = list.filter(b => b.status !== 'open').reduce((s, b) => s + b.pnl, 0);
+  // Ожидаемое число выигрышей, если рынок прав: сумма цен входа
+  const priced = closed.filter(b => b.price != null);
+  const exp = priced.reduce((s, b) => s + b.price, 0);
+  const act = priced.filter(b => b.status === 'won').length;
+  const vr = priced.reduce((s, b) => s + b.price * (1 - b.price), 0);
+  return {n: list.length, closed: closed.length, won, stake, pnl,
+    roi: settledStake ? settledPnl / settledStake : null,
+    wr: closed.length ? won / closed.length : null,
+    avgp: priced.length ? exp / priced.length : null,
+    diff: priced.length ? (act - exp) / priced.length : null,
+    z: vr > 0 ? (act - exp) / Math.sqrt(vr) : null, np: priced.length,
+    open: list.filter(b => b.status === 'open')};
+}
+
+// ------------------------------------------------------------------ отрисовка
+function render() {
+  syncControls();
+  if (!DATA) return;
+  const list = filtered();
+  $('#c-history').textContent = list.length;
+  $('#c-upcoming').textContent = BETS.filter(b => b.status === 'open').length + DATA.candidates.length;
+  store.set('filters', F); store.set('tab', TAB);
+  if (TAB === 'overview') renderOverview(list);
+  if (TAB === 'history') renderHistory(list);
+  if (TAB === 'upcoming') renderUpcoming(list);
+  if (TAB === 'slices') renderSlices(list);
+}
+
+function tile(lbl, val, note, klass, hero) {
+  return `<div class="tile${hero ? ' hero' : ''}"><div class="lbl">${lbl}</div><div class="val ${klass || ''}">${val}</div>${note ? `<div class="note">${note}</div>` : ''}</div>`;
+}
+
+function renderOverview(list) {
+  const s = stats(list);
+  const openStake = s.open.reduce((a, b) => a + b.stake, 0), openVal = s.open.reduce((a, b) => a + b.value, 0);
+  $('#tiles').innerHTML =
+    tile('Результат', money(s.pnl, true), `ставок ${s.n} · включая открытые по текущей цене`, cls(s.pnl), true) +
+    tile('ROI', pct(s.roi), 'по рассчитанным ставкам', cls(s.roi || 0)) +
+    tile('Оборот', money(s.stake), `средняя ставка ${money(s.n ? s.stake / s.n : 0)}`) +
+    tile('Доля выигрышей', s.wr == null ? '—' : pct(s.wr, 1, false), `${s.won} из ${s.closed} · рынок ждал ${s.avgp == null ? '—' : pct(s.avgp, 1, false)}`) +
+    tile('Открыто', money(openStake), `${s.open.length} поз. · сейчас стоят ${money(openVal)}`);
+  drawEquity(list); drawMonths(list); drawCalib(list, s); drawTypes(list);
+}
+
+// Общие настройки графиков из токенов темы
+function baseOpts(extra) {
+  const grid = css('--grid'), muted = css('--muted');
+  return Object.assign({
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: {mode: 'index', intersect: false},
+    plugins: {legend: {display: false}, tooltip: tooltipOpts()},
+    scales: {
+      x: {grid: {display: false}, border: {color: css('--axis')}, ticks: {color: muted, maxRotation: 0, autoSkipPadding: 12}},
+      y: {grid: {color: grid}, border: {display: false}, ticks: {color: muted}},
+    },
+  }, extra || {});
+}
+function tooltipOpts() {
+  return {backgroundColor: css('--surface'), titleColor: css('--ink'), bodyColor: css('--ink-2'),
+    borderColor: css('--ring'), borderWidth: 1, padding: 10, cornerRadius: 8, boxPadding: 4, usePointStyle: true};
+}
+function mk(id, cfg) { if (charts[id]) charts[id].destroy(); charts[id] = new Chart($('#' + id), cfg); }
+
+function drawEquity(list) {
+  const closed = list.filter(b => b.status !== 'open' && b.settled).sort((a, b) => a.settled - b.settled);
+  const days = [...new Set(closed.map(b => new Date(b.settled * 1000).toISOString().slice(0, 10)))];
+  const series = [['Всего', () => true, '--s1'], ['Бот', b => b.source === 'bot', '--s2'], ['Вручную', b => b.source === 'manual', '--s3']]
+    .filter(([n, f]) => n === 'Всего' || (F.source === 'all' && closed.some(f)));
+  const ds = series.map(([name, f, c]) => {
+    let acc = 0, i = 0; const out = [];
+    const mine = closed.filter(f);
+    for (const d of days) {
+      while (i < mine.length && new Date(mine[i].settled * 1000).toISOString().slice(0, 10) <= d) acc += mine[i++].pnl;
+      out.push(+acc.toFixed(2));
+    }
+    return {label: name, data: out, borderColor: css(c), backgroundColor: css(c), borderWidth: 2,
+      pointRadius: 0, pointHoverRadius: 5, pointHoverBorderWidth: 2, pointHoverBorderColor: css('--surface'), tension: 0};
+  });
+  $('#lg-equity').innerHTML = series.length > 1 ? series.map(([n, , c]) => `<span><i style="background:var(${c})"></i>${n}</span>`).join('') : '';
+  mk('ch-equity', {type: 'line', data: {labels: days.map(d => d.split('-').reverse().slice(0, 2).join('.') + '.' + d.slice(2, 4)), datasets: ds},
+    options: baseOpts({plugins: {legend: {display: false}, tooltip: Object.assign(tooltipOpts(), {callbacks: {label: c => ` ${c.dataset.label}: ${money(c.parsed.y, true)}`}})},
+      scales: Object.assign(baseOpts().scales, {y: {grid: {color: css('--grid')}, border: {display: false}, ticks: {color: css('--muted'), callback: v => moneyShort(v)}}})})});
+}
+
+function signedBars(labels, values, fmt, horizontal, extraTip) {
+  const pos = css('--pos'), neg = css('--neg');
+  return {labels, datasets: [{data: values, backgroundColor: values.map(v => v >= 0 ? pos : neg),
+    borderRadius: 4, borderSkipped: 'start', maxBarThickness: 24, categoryPercentage: 0.8, barPercentage: 0.9}]};
+}
+
+function drawMonths(list) {
+  const m = {};
+  list.forEach(b => { const k = monthKey(b.placed); (m[k] = m[k] || []).push(b); });
+  const keys = Object.keys(m).sort();
+  const st = keys.map(k => stats(m[k]));
+  mk('ch-month', {type: 'bar', data: signedBars(keys.map(monthLabel), st.map(s => +s.pnl.toFixed(2))),
+    options: baseOpts({interaction: {mode: 'nearest', intersect: false, axis: 'x'},
+      plugins: {legend: {display: false}, tooltip: Object.assign(tooltipOpts(), {callbacks: {
+        label: c => { const s = st[c.dataIndex]; return [` результат ${money(s.pnl, true)}`, ` ROI ${pct(s.roi)}`, ` ставок ${s.n}, оборот ${money(s.stake)}`]; }}})},
+      scales: {x: baseOpts().scales.x, y: {grid: {color: css('--grid')}, border: {display: false}, ticks: {color: css('--muted'), callback: v => moneyShort(v)}}}})});
+}
+
+const PRICE_BUCKETS = [[0, .2, '< 0,20'], [.2, .3, '0,20–0,30'], [.3, .4, '0,30–0,40'], [.4, .5, '0,40–0,50'], [.5, .6, '0,50–0,60'], [.6, .7, '0,60–0,70'], [.7, .8, '0,70–0,80'], [.8, 1.01, '≥ 0,80']];
+
+function drawCalib(list, s) {
+  const closed = list.filter(b => (b.status === 'won' || b.status === 'lost') && b.price != null);
+  const pts = PRICE_BUCKETS.map(([lo, hi, name]) => {
+    const g = closed.filter(b => b.price >= lo && b.price < hi);
+    if (!g.length) return null;
+    const avg = g.reduce((a, b) => a + b.price, 0) / g.length;
+    const wr = g.filter(b => b.status === 'won').length / g.length;
+    return {x: +avg.toFixed(3), y: +wr.toFixed(3), n: g.length, name};
+  }).filter(Boolean);
+  const r = n => Math.max(4, Math.min(14, 3 + Math.sqrt(n)));
+  mk('ch-calib', {type: 'scatter', data: {datasets: [
+    {type: 'line', data: [{x: 0, y: 0}, {x: 1, y: 1}], borderColor: css('--axis'), borderWidth: 1, pointRadius: 0, pointHoverRadius: 0},
+    {data: pts, backgroundColor: css('--s1'), borderColor: css('--surface'), borderWidth: 2, pointRadius: pts.map(p => r(p.n)), pointHoverRadius: pts.map(p => r(p.n) + 2)}]},
+    options: baseOpts({interaction: {mode: 'nearest', intersect: true},
+      plugins: {legend: {display: false}, tooltip: Object.assign(tooltipOpts(), {filter: c => c.datasetIndex === 1, callbacks: {
+        title: c => 'цена ' + c[0].raw.name, label: c => [` рынок ждал ${pct(c.raw.x, 1, false)}`, ` выиграно ${pct(c.raw.y, 1, false)}`, ` ставок ${c.raw.n}`]}})},
+      scales: {x: {type: 'linear', min: 0, max: 1, grid: {color: css('--grid')}, border: {color: css('--axis')}, ticks: {color: css('--muted'), callback: v => Math.round(v * 100) + '%'}, title: {display: true, text: 'цена входа', color: css('--muted')}},
+        y: {min: 0, max: 1, grid: {color: css('--grid')}, border: {display: false}, ticks: {color: css('--muted'), callback: v => Math.round(v * 100) + '%'}, title: {display: true, text: 'выиграно', color: css('--muted')}}}})});
+
+  let verdict = '';
+  if (s.z != null && s.np >= 10) {
+    const p = s.avgp, d = s.diff;
+    const need = d > 0 ? Math.ceil(1.96 * 1.96 * p * (1 - p) / (d * d)) : null;
+    if (Math.abs(s.z) >= 1.96) verdict = d > 0 ? '✓ перевес статистически значим' : '✕ проигрываем рынку — и это не случайность';
+    else verdict = '≈ пока неотличимо от случайности' + (need ? ` · для проверки нужно около ${need.toLocaleString('ru-RU')} ставок` : '');
+  }
+  $('#calib-text').innerHTML = s.np ? `Рынок ждал <b>${pct(s.avgp, 1, false)}</b> выигрышей, выиграно <b>${pct(s.wr, 1, false)}</b> ` +
+    `— разница <b class="${cls(s.diff)}">${s.diff > 0 ? '+' : ''}${(s.diff * 100).toFixed(1).replace('.', ',')} п.п.</b>, z = ${s.z.toFixed(2).replace('.', ',')} (ставок: ${s.np}).` +
+    (verdict ? `<br><span class="verdict">${verdict}</span>` : '') : 'Нет рассчитанных ставок.';
+}
+
+function groupStats(list, keyFn, order) {
+  const m = {};
+  list.forEach(b => { const k = keyFn(b); if (k == null) return; (m[k] = m[k] || []).push(b); });
+  let keys = Object.keys(m);
+  if (order) keys.sort(order); else keys.sort((a, b) => m[b].length - m[a].length);
+  return keys.map(k => Object.assign({key: k}, stats(m[k])));
+}
+
+function drawTypes(list) {
+  const g = groupStats(list.filter(b => b.status !== 'open'), b => b.type).filter(x => x.n >= 3)
+    .sort((a, b) => (b.roi ?? -9) - (a.roi ?? -9));
+  mk('ch-type', {type: 'bar', data: signedBars(g.map(x => `${x.key} (${x.n})`), g.map(x => +((x.roi || 0) * 100).toFixed(1))),
+    options: baseOpts({indexAxis: 'y', interaction: {mode: 'nearest', intersect: false, axis: 'y'},
+      plugins: {legend: {display: false}, tooltip: Object.assign(tooltipOpts(), {callbacks: {
+        label: c => { const x = g[c.dataIndex]; return [` ROI ${pct(x.roi)}`, ` результат ${money(x.pnl, true)}`, ` оборот ${money(x.stake)}`]; }}})},
+      scales: {x: {grid: {color: css('--grid')}, border: {display: false}, ticks: {color: css('--muted'), callback: v => v + '%'}},
+        y: {grid: {display: false}, border: {color: css('--axis')}, ticks: {color: css('--ink-2')}}}})});
+}
+
+// --- таблица прошлых ставок
+const HCOLS = [
+  {k: 'placed', t: 'Дата', f: b => fmtDate(b.placed)},
+  {k: 'match', t: 'Матч · ставка', f: b => `<a href="${esc(b.url)}" target="_blank" rel="noopener"><span class="m" title="${esc(b.title)}">${esc(b.match)}</span><span class="s">${esc(b.selection)}</span></a>`},
+  {k: 'league_short', t: 'Лига', f: b => `<span class="s" style="color:var(--ink-2)">${esc(b.league_short)}</span>`},
+  {k: 'type', t: 'Рынок', f: b => esc(b.type)},
+  {k: 'source', t: 'Кто', f: b => srcTag(b.source)},
+  {k: 'price', t: 'Цена', num: 1, f: b => b.price == null ? '—' : b.price.toFixed(3)},
+  {k: 'edge', t: 'Edge', num: 1, f: b => b.edge == null ? '<span style="color:var(--muted)">—</span>' : pct(b.edge)},
+  {k: 'stake', t: 'Ставка', num: 1, f: b => money(b.stake)},
+  {k: 'pnl', t: 'Результат', num: 1, f: b => `<span class="${cls(b.pnl)}">${money(b.pnl, true)}</span>`},
+  {k: 'roi', t: 'ROI', num: 1, f: b => `<span class="${cls(b.pnl)}">${pct(b.stake ? b.pnl / b.stake : null, 0)}</span>`},
+  {k: 'status', t: 'Статус', f: b => badge(b.status)},
+];
+function sortVal(b, k) { return k === 'roi' ? (b.stake ? b.pnl / b.stake : 0) : b[k]; }
+function head(cols, sort) {
+  return '<thead><tr>' + cols.map(c => `<th data-k="${c.k}" class="${c.num ? 'num' : ''}">${c.t}${sort && sort.k === c.k ? ` <span class="ar">${sort.d > 0 ? '▲' : '▼'}</span>` : ''}</th>`).join('') + '</tr></thead>';
+}
+function cardify(sel) {
+  const t = $(sel); if (!t) return;
+  const heads = [...t.querySelectorAll('thead th')].map(th => th.textContent.replace(/[▲▼]/g, '').trim());
+  t.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => {
+    if (td.hasAttribute('colspan')) return;
+    if (td.querySelector('.m')) td.classList.add('wide');
+    else if (td.querySelector('input[type=checkbox]')) td.classList.add('chk');
+    else if (heads[i]) td.dataset.l = heads[i];
+  }));
+}
+
+function renderHistory(list) {
+  const s = stats(list);
+  $('#h-sum').innerHTML = `${list.length} ставок · оборот ${money(s.stake)} · результат <span class="${cls(s.pnl)}">${money(s.pnl, true)}</span>`;
+  const rows = list.slice().sort((a, b) => { const x = sortVal(a, SORT.k), y = sortVal(b, SORT.k);
+    if (x == null) return 1; if (y == null) return -1; return (x > y ? 1 : x < y ? -1 : 0) * SORT.d; });
+  const pages = Math.max(1, Math.ceil(rows.length / PER)); PAGE = Math.min(PAGE, pages - 1);
+  const part = rows.slice(PAGE * PER, PAGE * PER + PER);
+  $('#t-history').innerHTML = head(HCOLS, SORT) + '<tbody>' + (part.length ? part.map(b => '<tr>' + HCOLS.map(c => `<td class="${c.num ? 'num' : ''}">${c.f(b)}</td>`).join('') + '</tr>').join('')
+    : `<tr><td colspan="${HCOLS.length}" class="empty">Под фильтры ничего не подходит</td></tr>`) + '</tbody>';
+  cardify('#t-history');
+  $('#pager').innerHTML = pages > 1 ? `<button class="btn" data-p="-1"${PAGE ? '' : ' disabled'}>←</button> стр. ${PAGE + 1} из ${pages} <button class="btn" data-p="1"${PAGE < pages - 1 ? '' : ' disabled'}>→</button>` : '';
+}
+
+// --- предстоящие
+function renderUpcoming(list) {
+  const open = list.filter(b => b.status === 'open').sort((a, b) => (a.kickoff || '').localeCompare(b.kickoff || ''));
+  const cols = ['Начало', 'Матч · ставка', 'Лига', 'Кто', 'Вход', 'Сейчас', 'Ставка', 'Стоит сейчас', 'Если выиграет', 'Изменение'];
+  $('#t-open').innerHTML = '<thead><tr>' + cols.map((c, i) => `<th class="${i >= 4 ? 'num' : ''}">${c}</th>`).join('') + '</tr></thead><tbody>' +
+    (open.length ? open.map(b => { const ch = b.value - b.stake;
+      return `<tr><td>${fmtDT(b.kickoff)}</td><td><a href="${esc(b.url)}" target="_blank" rel="noopener"><span class="m">${esc(b.match)}</span><span class="s">${esc(b.selection)}</span></a></td>` +
+      `<td><span class="s" style="color:var(--ink-2)">${esc(b.league_short)}</span></td><td>${srcTag(b.source)}</td>` +
+      `<td class="num">${b.price == null ? '—' : b.price.toFixed(3)}</td><td class="num">${b.cur_price == null ? '—' : b.cur_price.toFixed(3)}</td>` +
+      `<td class="num">${money(b.stake)}</td><td class="num">${money(b.value)}</td><td class="num">${money(b.shares)}</td>` +
+      `<td class="num ${cls(ch)}">${money(ch, true)}</td></tr>`; }).join('')
+      : `<tr><td colspan="${cols.length}" class="empty">Открытых позиций под фильтры нет</td></tr>`) + '</tbody>';
+
+  const c = DATA.candidates.slice().sort((a, b) => (a.kickoff || '').localeCompare(b.kickoff || ''));
+  const cc = ['Начало', 'Матч · ставка', 'Лига', 'Откуда', 'Наша оценка', 'Цена', 'Edge', 'Ставка'];
+  $('#t-cands').innerHTML = '<thead><tr>' + cc.map((x, i) => `<th class="${i >= 4 ? 'num' : ''}">${x}</th>`).join('') + '</tr></thead><tbody>' +
+    (c.length ? c.map(r => `<tr><td>${fmtDT(r.kickoff)}</td><td><a href="${esc(r.url)}" target="_blank" rel="noopener"><span class="m">${esc(r.match)}</span><span class="s">${esc(r.selection)}</span></a></td>` +
+      `<td><span class="s" style="color:var(--ink-2)">${esc(r.league)}</span></td><td>${r.origin === 'модель' ? '<span class="src">модель</span>' : '<span class="src bot">ждёт в Telegram</span>'}</td>` +
+      `<td class="num">${r.our_prob == null ? '—' : pct(r.our_prob, 0, false)}</td><td class="num">${r.price == null ? '—' : r.price.toFixed(3)}</td>` +
+      `<td class="num up">${pct(r.edge)}</td><td class="num">${money(r.stake)}</td></tr>`).join('')
+      : `<tr><td colspan="${cc.length}" class="empty">Непоставленных рекомендаций нет</td></tr>`) + '</tbody>';
+  cardify('#t-open'); cardify('#t-cands');
+}
+
+// --- срезы
+const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+function sliceKey(by) {
+  const d = b => new Date(b.placed * 1000);
+  const bucket = (v, edges, names) => { if (v == null) return null; for (let i = 0; i < edges.length; i++) if (v < edges[i]) return names[i]; return names[names.length - 1]; };
+  return {
+    month: [b => monthKey(b.placed), (a, b) => a.localeCompare(b), monthLabel],
+    week: [b => { const x = d(b); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x.toISOString().slice(0, 10); }, (a, b) => a.localeCompare(b), k => 'с ' + k.slice(8, 10) + '.' + k.slice(5, 7) + '.' + k.slice(2, 4)],
+    sport: [b => b.sport], league: [b => b.league_short], type: [b => b.type],
+    source: [b => b.source === 'bot' ? 'бот' : 'вручную'],
+    price: [b => b.price == null ? null : PRICE_BUCKETS.find(([lo, hi]) => b.price >= lo && b.price < hi)?.[2], (a, b) => PRICE_BUCKETS.findIndex(x => x[2] === a) - PRICE_BUCKETS.findIndex(x => x[2] === b)],
+    stake: [b => bucket(b.stake, [2, 5, 10, 25, 50, 1e9], ['< $2', '$2–5', '$5–10', '$10–25', '$25–50', '≥ $50']), (a, b) => ['< $2', '$2–5', '$5–10', '$10–25', '$25–50', '≥ $50'].indexOf(a) - ['< $2', '$2–5', '$5–10', '$10–25', '$25–50', '≥ $50'].indexOf(b)],
+    edge: [b => bucket(b.edge, [0.02, 0.05, 0.1, 0.15, 9], ['< 2%', '2–5%', '5–10%', '10–15%', '≥ 15%']), (a, b) => ['< 2%', '2–5%', '5–10%', '10–15%', '≥ 15%'].indexOf(a) - ['< 2%', '2–5%', '5–10%', '10–15%', '≥ 15%'].indexOf(b)],
+    weekday: [b => String((d(b).getDay() + 6) % 7), (a, b) => a - b, k => WEEKDAYS[(+k + 1) % 7]],
+    hour: [b => String(d(b).getHours()).padStart(2, '0'), (a, b) => a - b, k => k + ':00'],
+  }[by];
+}
+function renderSlices(list) {
+  const [kf, order, lbl] = sliceKey(SLICE.by);
+  const g = groupStats(list, kf, order);
+  const L = k => lbl ? lbl(k) : k;
+  const M = {pnl: [x => x.pnl, v => moneyShort(v), x => money(x.pnl, true)], roi: [x => (x.roi || 0) * 100, v => v + '%', x => pct(x.roi)],
+    stake: [x => x.stake, v => moneyShort(v), x => money(x.stake)], wr: [x => (x.wr || 0) * 100, v => v + '%', x => pct(x.wr, 1, false)],
+    diff: [x => (x.diff || 0) * 100, v => v + ' п.п.', x => x.diff == null ? '—' : (x.diff * 100).toFixed(1) + ' п.п.']}[SLICE.metric];
+  const horiz = !['month', 'week', 'hour', 'weekday', 'price', 'stake', 'edge'].includes(SLICE.by);
+  $('#slice-chart-box').style.height = horiz ? Math.max(220, g.length * 30 + 40) + 'px' : '300px';
+  const vals = g.map(x => +M[0](x).toFixed(2));
+  const signed = SLICE.metric !== 'stake' && SLICE.metric !== 'wr';
+  const data = signed ? signedBars(g.map(x => L(x.key)), vals)
+    : {labels: g.map(x => L(x.key)), datasets: [{data: vals, backgroundColor: css('--s1'), borderRadius: 4, borderSkipped: 'start', maxBarThickness: 24, categoryPercentage: 0.8, barPercentage: 0.9}]};
+  const valAxis = {grid: {color: css('--grid')}, border: {display: false}, ticks: {color: css('--muted'), callback: M[1]}};
+  const catAxis = {grid: {display: false}, border: {color: css('--axis')}, ticks: {color: horiz ? css('--ink-2') : css('--muted'), autoSkip: !horiz}};
+  mk('ch-slice', {type: 'bar', data, options: baseOpts({indexAxis: horiz ? 'y' : 'x',
+    interaction: {mode: 'nearest', intersect: false, axis: horiz ? 'y' : 'x'},
+    plugins: {legend: {display: false}, tooltip: Object.assign(tooltipOpts(), {callbacks: {label: c => { const x = g[c.dataIndex];
+      return [` результат ${money(x.pnl, true)} · ROI ${pct(x.roi)}`, ` ставок ${x.n} · оборот ${money(x.stake)}`, ` выиграно ${pct(x.wr, 1, false)} при цене ${pct(x.avgp, 1, false)}`]; }}})},
+    scales: horiz ? {x: valAxis, y: catAxis} : {x: catAxis, y: valAxis}})});
+
+  const maxAbs = Math.max(1e-9, ...g.map(x => Math.abs(x.roi || 0)));
+  const cols = ['Группа', 'Ставок', 'Рассчитано', 'Оборот', 'Результат', 'ROI', '', 'Выиграно', 'Цена входа', 'Перевес'];
+  $('#t-slice').innerHTML = '<thead><tr>' + cols.map((c, i) => `<th class="${i && i !== 6 ? 'num' : ''}">${c}</th>`).join('') + '</tr></thead><tbody>' +
+    (g.length ? g.map(x => `<tr><td>${esc(L(x.key))}</td><td class="num">${x.n}</td><td class="num">${x.closed}</td><td class="num">${money(x.stake)}</td>` +
+      `<td class="num ${cls(x.pnl)}">${money(x.pnl, true)}</td><td class="num ${cls(x.roi || 0)}">${pct(x.roi)}</td>` +
+      `<td class="barcell"><span class="bar" style="width:${Math.round(Math.abs(x.roi || 0) / maxAbs * 100)}%;background:var(${(x.roi || 0) >= 0 ? '--pos' : '--neg'})"></span></td>` +
+      `<td class="num">${pct(x.wr, 1, false)}</td><td class="num">${pct(x.avgp, 1, false)}</td>` +
+      `<td class="num ${cls(x.diff || 0)}">${x.diff == null ? '—' : (x.diff > 0 ? '+' : '') + (x.diff * 100).toFixed(1).replace('.', ',') + ' п.п.'}</td></tr>`).join('')
+      : `<tr><td colspan="${cols.length}" class="empty">Нет данных</td></tr>`) + '</tbody>';
+  store.set('slice', SLICE);
+}
+
+function exportCSV() {
+  const list = filtered();
+  const cols = ['placed', 'kickoff', 'match', 'selection', 'title', 'outcome', 'sport', 'league_short', 'type', 'source', 'price', 'shares', 'stake', 'returned', 'value', 'pnl', 'status', 'our_prob', 'edge', 'url'];
+  const q = v => { v = v == null ? '' : String(v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const lines = [cols.join(';')].concat(list.map(b => cols.map(c => q(c === 'placed' ? new Date(b.placed * 1000).toISOString().slice(0, 16).replace('T', ' ') :
+    typeof b[c] === 'number' ? String(b[c]).replace('.', ',') : b[c])).join(';')));
+  const blob = new Blob(['﻿' + lines.join('\n')], {type: 'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'polymarket_bets.csv'; a.click();
+}
+
+// ------------------------------------------------------------------ найти ставки
+let FD = null, FD_SEL = new Set(), FD_KNOWN = new Set(), fdTimer = null, FD_BUSY = false;
+let FD_LAST_FOUND = store.get('lastFound', 0);
+
+async function fdApi(path, body) {
+  const opt = body === undefined ? {} : {method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-PM-Token': PM_TOKEN}, body: JSON.stringify(body)};
+  const r = await fetch('/api/finder' + path, opt);
+  if (r.status === 401) { location.href = '/login'; throw new Error('нужно войти'); }
+  if (r.status === 403) throw new Error('страница устарела — обнови её (F5)');
+  if (!r.ok) throw new Error('сервер ответил ' + r.status);
+  return r.json();
+}
+
+function fdError(msg) {
+  const el = $('#fd-error');
+  el.textContent = msg || ''; el.classList.toggle('hidden', !msg);
+}
+
+async function fdLoad() {
+  clearTimeout(fdTimer);
+  try { fdApply(await fdApi('')); }
+  catch (e) { $('#fd-status').textContent = 'Нет связи с сервером дашборда: ' + e.message; }
+  fdTimer = setTimeout(fdLoad, FD && FD.running ? 2000 : 20000);
+}
+
+function fdApply(d) {
+  FD = d;
+  const ids = new Set(d.plan.map(p => p.id));
+  // новые ставки отмечаем сразу, снятые вручную галочки сохраняем
+  d.plan.forEach(p => { if (!FD_KNOWN.has(p.id)) FD_SEL.add(p.id); FD_KNOWN.add(p.id); });
+  // выпавшая ставка (пересчёт на меньшую сумму) при возвращении снова отмечена
+  [...FD_KNOWN].forEach(id => { if (!ids.has(id)) { FD_SEL.delete(id); FD_KNOWN.delete(id); } });
+  if (d.error) fdError(d.error);
+  fdNotify(d);
+  renderFinder();
+}
+
+function fdNotify(d) {
+  if (!d.found_at) return;
+  if (!FD_LAST_FOUND) { FD_LAST_FOUND = d.found_at; store.set('lastFound', d.found_at); return; }
+  if (d.found_at <= FD_LAST_FOUND) return;
+  FD_LAST_FOUND = d.found_at; store.set('lastFound', d.found_at);
+  if (store.get('notify', false) && window.Notification && Notification.permission === 'granted') {
+    const n = new Notification('Найдены ставки: ' + d.new_count, {
+      body: d.plan.slice(0, 3).map(p => p.match + ' — ' + p.selection).join('\n'), tag: 'pm-finder'});
+    n.onclick = () => { window.focus(); TAB = 'finder'; render(); n.close(); };
+  }
+}
+
+const hhmm = ts => ts ? new Date(ts * 1000).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : '—';
+const ago = ts => { const m = Math.round((Date.now() / 1000 - ts) / 60);
+  return m < 1 ? 'только что' : m < 60 ? m + ' мин назад' : Math.floor(m / 60) + ' ч ' + (m % 60) + ' мин назад'; };
+
+function renderFinder() {
+  const d = FD; if (!d) return;
+  const n = d.plan.length;
+  $('#c-finder').textContent = n || '';
+  document.title = (n ? '(' + n + ') ' : '') + 'Ставки Polymarket';
+
+  const btn = $('#fd-scan');
+  if (!STATIC) btn.disabled = d.running;
+  if (!(STATIC && btn.disabled)) btn.innerHTML = d.running ? '<span class="spin"></span>Проверяю…' : (STATIC ? 'Проверить сейчас' : 'Проверить ставки');
+  if (STATIC) { btn.classList.toggle('hidden', !d.dispatch); }
+  let st;
+  if (d.running) {
+    const s = Math.round(d.elapsed);
+    st = `<b>${esc(d.stage || 'идёт проверка')}</b> · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}<br>` +
+      'обычно 3–8 минут; страницу можно закрыть — проверка доделается сама';
+  } else if (d.static && d.last_scan) {
+    st = `Последняя проверка ${new Date(d.last_scan * 1000).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})} (${ago(d.last_scan)})` +
+      (d.last_error ? '' : `: ${esc(d.last_result)}.`) + `<br>Проверка идёт сама: ${esc(d.schedule || '')}.` +
+      (d.dispatch ? ' Кнопка запускает её вне расписания.' : '');
+  } else if (d.last_scan) {
+    st = `Последняя проверка в <b>${hhmm(d.last_scan)}</b> (${ago(d.last_scan)})` +
+      (d.last_error ? '' : `: ${esc(d.last_result)}. Отсеяно: ${esc(d.last_why)}.`) +
+      '<br>' + (d.auto && d.next_scan ? `Следующая автопроверка в <b>${hhmm(d.next_scan)}</b>.` : 'Автопроверка выключена.');
+  } else {
+    st = 'Ещё не проверяли.' + (d.auto && d.next_scan ? ` Автопроверка в <b>${hhmm(d.next_scan)}</b>.` : '');
+  }
+  $('#fd-status').innerHTML = st;
+  if (d.last_error && !d.running) fdError('Проверка не удалась: ' + d.last_error);
+  else if (!d.error) fdError('');
+
+  const act = document.activeElement;
+  if (act !== $('#fd-every')) $('#fd-every').value = d.every_min;
+  if (act !== $('#fd-bank')) $('#fd-bank').value = d.bank;
+  if (act !== $('#fd-budget')) $('#fd-budget').value = d.budget || 0;
+  $('#fd-auto').checked = d.auto;
+  $('#fd-notify').checked = store.get('notify', false);
+  $('#fd-balance').innerHTML = d.balance == null ? '<span class="sub" style="margin:0">баланс недоступен — задан ли ключ?</span>'
+    : `свободно на счёте: <b style="color:var(--ink)">${money(d.balance)}</b>`;
+
+  $('#fd-note').textContent = d.note || '';
+  const all = n && d.plan.every(p => FD_SEL.has(p.id));
+  const cols = ['Начало', 'Матч · ставка', 'Лига', 'Наша оценка', 'Цена', 'Edge', 'Акций', 'Сумма'];
+  const chkHead = STATIC ? '' : `<th style="width:28px"><input type="checkbox" id="fd-all"${all ? ' checked' : ''}${n ? '' : ' disabled'}></th>`;
+  const chk = p => STATIC ? '' : `<td><input type="checkbox" data-id="${esc(p.id)}"${FD_SEL.has(p.id) ? ' checked' : ''}></td>`;
+  const link = p => STATIC ? `<td class="num"><a class="pm-link" href="${esc(p.url)}" target="_blank" rel="noopener">Поставить ↗</a></td>` : '';
+  $('#t-finder').classList.toggle('has-chk', !STATIC);
+  $('#t-finder').innerHTML = `<thead><tr>${chkHead}` +
+    cols.map((c, i) => `<th class="${i >= 3 ? 'num' : ''}">${c}</th>`).join('') + (STATIC ? '<th></th>' : '') + '</tr></thead><tbody>' +
+    (n ? d.plan.map(p => `<tr>${chk(p)}` +
+      `<td>${fmtDT(p.kickoff)}</td><td><a href="${esc(p.url)}" target="_blank" rel="noopener"><span class="m">${esc(p.match)}</span><span class="s">${esc(p.selection)}</span></a></td>` +
+      `<td><span class="s" style="color:var(--ink-2)">${esc(p.league)}</span></td>` +
+      `<td class="num">${pct(p.our_prob, 0, false)}</td><td class="num">${p.price.toFixed(3)}</td>` +
+      `<td class="num up">${pct(p.edge)}</td><td class="num">${p.size.toFixed(1)}</td><td class="num"><b>${money(p.usd)}</b></td>${link(p)}</tr>`).join('')
+      : `<tr><td colspan="9" class="empty">${d.running ? 'Идёт проверка…' : 'Сейчас подходящих ставок нет. ' +
+        (d.declined ? `Скрыто матчей: ${d.declined}.` : '')}</td></tr>`) + '</tbody>';
+
+  cardify('#t-finder');
+  const sel = d.plan.filter(p => FD_SEL.has(p.id));
+  const sum = sel.reduce((a, p) => a + p.usd, 0);
+  $('#fd-sel').innerHTML = n ? `выбрано <b style="color:var(--ink)">${sel.length}</b> из ${n} на <b style="color:var(--ink)">${money(sum)}</b>` : '';
+  $('#fd-actions').classList.toggle('hidden', !n);
+  ['#fd-place', '#fd-hide'].forEach(b => $(b).disabled = !sel.length || FD_BUSY);
+
+  const res = (d.results || []).slice().reverse();
+  const icon = {ok: '✅', skip: '⏭', error: '❌'};
+  $('#fd-res-card').classList.toggle('hidden', !res.length);
+  $('#fd-results').innerHTML = res.map(r => `<div class="res"><span>${icon[r.status] || '·'}</span><span class="t">${esc(r.ts)}</span>` +
+    `<span><span class="n">${esc(r.name)}</span> <span class="x">— ${esc(r.text)}</span></span></div>`).join('');
+}
+
+function fdSelected() { return FD ? FD.plan.filter(p => FD_SEL.has(p.id)) : []; }
+
+async function fdPost(path, body) {
+  FD_BUSY = true; renderFinder(); fdError('');
+  try { const d = await fdApi(path, body); fdApply(d); return d; }
+  catch (e) { fdError(e.message); }
+  finally { FD_BUSY = false; renderFinder(); }
+}
+
+function fdConfirmPlace() {
+  const sel = fdSelected(); if (!sel.length) return;
+  const sum = sel.reduce((a, p) => a + p.usd, 0);
+  const word = sel.length === 1 ? 'ставку' : sel.length < 5 ? 'ставки' : 'ставок';
+  $('#modal-title').textContent = `Поставить ${sel.length} ${word} на ${money(sum)}?`;
+  $('#modal-body').innerHTML = sel.map(p => `<div class="mline"><span>${esc(p.match)} — ${esc(p.selection)}</span><span>${money(p.usd)} по ${p.price.toFixed(3)}</span></div>`).join('') +
+    '<p class="sub" style="margin-top:12px">Это реальные деньги. Перед отправкой каждая ставка сверяется со стаканом: если цена ушла, edge просел или матч скоро начнётся — она будет пропущена.</p>';
+  $('#modal').classList.remove('hidden');
+  const yes = $('#modal-yes');
+  yes.disabled = false; yes.textContent = 'Поставить';
+  yes.onclick = async () => {
+    yes.disabled = true; yes.innerHTML = '<span class="spin"></span>Ставлю…';
+    const d = await fdPost('/place', {ids: sel.map(p => p.id)});
+    $('#modal').classList.add('hidden'); yes.textContent = 'Поставить';
+    if (d && d.halted) fdError('Polymarket приостановил торговлю — остальные ставки не отправлялись. https://status.polymarket.com');
+    if (d && d.placed) setTimeout(() => load(false), 1500);
+  };
+}
+
+function bindFinder() {
+  $('#fd-scan').onclick = () => fdPost('/scan', {}).then(() => { clearTimeout(fdTimer); fdTimer = setTimeout(fdLoad, 1500); });
+  $('#fd-auto').onchange = e => fdPost('/settings', {auto: e.target.checked});
+  $('#fd-every').onchange = e => fdPost('/settings', {every_min: e.target.value});
+  $('#fd-bank').onchange = e => fdPost('/settings', {bank: e.target.value});
+  $('#fd-budget').onchange = e => fdPost('/settings', {budget: e.target.value || 0});
+  $('#fd-notify').onchange = async e => {
+    let on = e.target.checked;
+    if (on && window.Notification && Notification.permission !== 'granted') on = (await Notification.requestPermission()) === 'granted';
+    if (e.target.checked && !on) fdError('Браузер не разрешил уведомления — разреши их для этой страницы в настройках сайта.');
+    store.set('notify', on); e.target.checked = on;
+  };
+  $('#t-finder').onchange = e => {
+    const c = e.target; if (c.type !== 'checkbox') return;
+    if (c.id === 'fd-all') FD.plan.forEach(p => c.checked ? FD_SEL.add(p.id) : FD_SEL.delete(p.id));
+    else if (c.checked) FD_SEL.add(c.dataset.id); else FD_SEL.delete(c.dataset.id);
+    renderFinder();
+  };
+  $('#fd-fit').onclick = () => { const v = parseFloat(String($('#fd-target').value).replace(',', '.'));
+    if (!(v > 0)) { fdError('Впиши сумму больше нуля'); return; } fdPost('/fit', {target: v}); };
+  $('#fd-refit').onclick = () => { $('#fd-target').value = ''; fdPost('/fit', {target: 0}); };
+  $('#fd-hide').onclick = () => { const sel = fdSelected();
+    if (sel.length && confirm(`Скрыть ${sel.length} шт.? Эти матчи больше не будут предлагаться.`)) fdPost('/decline', {ids: sel.map(p => p.id)}); };
+  $('#fd-place').onclick = fdConfirmPlace;
+  $('#modal-no').onclick = () => $('#modal').classList.add('hidden');
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').classList.add('hidden'); });
+}
+
+// ------------------------------------------------------------------ сайт на GitHub Pages
+// Данные лежат в data.enc зашифрованными (AES-256-GCM, ключ из пароля через
+// PBKDF2-SHA256). Расшифровка — здесь, в браузере; пароль никуда не уходит.
+const hexBytes = h => Uint8Array.from(h.match(/../g).map(x => parseInt(x, 16)));
+const b64Bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const bytesHex = b => [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+let ENC = null;
+
+function savedKey() {
+  for (const st of [sessionStorage, localStorage]) {
+    try { const k = JSON.parse(st.getItem('pmdash.key') || 'null'); if (k) return k; } catch (e) {}
+  }
+  return null;
+}
+function forgetKey() {
+  for (const st of [sessionStorage, localStorage]) { try { st.removeItem('pmdash.key'); } catch (e) {} }
+}
+
+async function deriveKey(password, enc) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name: 'PBKDF2', hash: 'SHA-256', salt: hexBytes(enc.salt), iterations: enc.iter}, base, 256);
+  return new Uint8Array(bits);
+}
+
+async function decryptPayload(raw, enc) {
+  const key = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({name: 'AES-GCM', iv: b64Bytes(enc.iv)}, key, b64Bytes(enc.data));
+  const stream = new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return JSON.parse(await new Response(stream).text());
+}
+
+function showLogin(msg) {
+  $('#loading').classList.add('hidden');
+  $('#login').classList.remove('hidden');
+  $('#login-err').textContent = msg || '';
+  setTimeout(() => $('#login-pw').focus(), 50);
+}
+
+function applyPayload(p) {
+  DATA = p.dashboard; BETS = DATA.bets;
+  const upd = new Date(p.generated * 1000).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
+  $('#meta').textContent = `${DATA.address.slice(0, 6)}…${DATA.address.slice(-4)} · ${BETS.length} позиций · обновлено ${upd}`;
+  $('#login').classList.add('hidden');
+  fillSelects(); render(); fdApply(p.finder);
+}
+
+async function loadStatic(quiet) {
+  const btn = $('#refresh'); btn.disabled = true;
+  try {
+    const r = await fetch('data.enc?t=' + Date.now(), {cache: 'no-store'});
+    if (!r.ok) throw new Error('data.enc: ' + r.status);
+    ENC = await r.json();
+    const k = savedKey();
+    if (!k || k.salt !== ENC.salt) { if (!DATA) showLogin(); return; }
+    try { applyPayload(await decryptPayload(hexBytes(k.key), ENC)); }
+    catch (e) { forgetKey(); showLogin('Пароль сменился — войди заново.'); }
+  } catch (e) {
+    if (!quiet) $('#loading').textContent = 'Не удалось загрузить данные: ' + e.message;
+  } finally { btn.disabled = false; }
+}
+
+async function staticLogin(ev) {
+  ev.preventDefault();
+  const pw = $('#login-pw').value, btn = $('#login-btn');
+  if (!ENC) { await loadStatic(); if (!ENC) return; }
+  btn.disabled = true; btn.textContent = 'Проверяю…'; $('#login-err').textContent = '';
+  try {
+    const raw = await deriveKey(pw, ENC);
+    const p = await decryptPayload(raw, ENC);
+    const rec = JSON.stringify({salt: ENC.salt, key: bytesHex(raw)});
+    try { ($('#login-remember').checked ? localStorage : sessionStorage).setItem('pmdash.key', rec); } catch (e) {}
+    $('#login-pw').value = '';
+    applyPayload(p);
+  } catch (e) {
+    $('#login-err').textContent = 'Неверный пароль.';
+  } finally { btn.disabled = false; btn.textContent = 'Открыть'; }
+}
+
+// «Проверить сейчас»: запуск проверки в GitHub Actions через API.
+// Нужен твой токен GitHub с одним правом — Actions (запуск) в приватном
+// репозитории. Он хранится только в этом браузере.
+async function staticScan() {
+  const disp = FD && FD.dispatch;
+  if (!disp) { fdError('Запуск с сайта не настроен — проверка идёт по расписанию.'); return; }
+  let token = store.get('ghtoken', '');
+  if (!token) {
+    token = (prompt('Вставь токен GitHub с правом Actions: Read and write для репозитория ' + disp.repo +
+      '. Он сохранится только в этом браузере.') || '').trim();
+    if (!token) return;
+    store.set('ghtoken', token);
+  }
+  const started = ENC ? ENC.ts : 0;
+  const btn = $('#fd-scan'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Запускаю…';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${disp.repo}/actions/workflows/${disp.workflow}/dispatches`, {
+      method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'},
+      body: JSON.stringify({ref: 'main'})});
+    if (r.status === 401 || r.status === 403 || r.status === 404) {
+      store.set('ghtoken', '');
+      throw new Error('GitHub не принял токен (' + r.status + '). Нажми ещё раз и вставь правильный.');
+    }
+    if (r.status !== 204) throw new Error('GitHub ответил ' + r.status);
+    fdError('');
+    $('#fd-status').innerHTML = '<b>Проверка запущена на GitHub.</b> Обычно 3–6 минут — страница обновится сама.';
+    btn.innerHTML = '<span class="spin"></span>Идёт проверка…';
+    const t0 = Date.now();
+    const poll = async () => {
+      await loadStatic(true);
+      if (ENC && ENC.ts > started) { btn.disabled = false; renderFinder(); return; }
+      if (Date.now() - t0 > 12 * 60 * 1000) { btn.disabled = false; renderFinder();
+        fdError('Проверка идёт дольше обычного — загляни во вкладку Actions репозитория.'); return; }
+      setTimeout(poll, 30000);
+    };
+    setTimeout(poll, 60000);
+  } catch (e) { fdError(e.message); btn.disabled = false; renderFinder(); }
+}
+
+// ------------------------------------------------------------------ события
+function bind() {
+  $('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; TAB = b.dataset.tab; render(); if (TAB === 'finder') renderFinder(); };
+  const on = (id, key, ev = 'change') => $(id).addEventListener(ev, e => { F[key] = e.target.value; PAGE = 0;
+    if (key === 'sport') { F.league = 'all'; fillSelects(); } render(); });
+  on('#f-period', 'period'); on('#f-from', 'from'); on('#f-to', 'to'); on('#f-sport', 'sport'); on('#f-league', 'league');
+  on('#f-type', 'type'); on('#f-status', 'status'); on('#f-pmin', 'pmin', 'input'); on('#f-pmax', 'pmax', 'input');
+  on('#f-smin', 'smin', 'input'); on('#f-q', 'q', 'input');
+  $('#f-toggle').onclick = () => { $('#filters').classList.toggle('open'); syncControls(); };
+  $('#f-source').onclick = e => { const b = e.target.closest('button'); if (!b) return; F.source = b.dataset.v; PAGE = 0; render(); };
+  $('#f-reset').onclick = () => { Object.assign(F, {period: 'all', from: '', to: '', source: 'all', sport: 'all', league: 'all', type: 'all', status: 'all', pmin: '', pmax: '', smin: '', q: ''}); PAGE = 0; fillSelects(); render(); };
+  $('#t-history').onclick = e => { const th = e.target.closest('th'); if (!th) return;
+    SORT = {k: th.dataset.k, d: SORT.k === th.dataset.k ? -SORT.d : (['match', 'league_short', 'type', 'source', 'status'].includes(th.dataset.k) ? 1 : -1)};
+    store.set('sort', SORT); render(); };
+  $('#pager').onclick = e => { const b = e.target.closest('button'); if (!b) return; PAGE += +b.dataset.p; render(); };
+  $('#s-by').onchange = e => { SLICE.by = e.target.value; render(); };
+  $('#s-metric').onchange = e => { SLICE.metric = e.target.value; render(); };
+  $('#csv').onclick = exportCSV;
+  $('#refresh').onclick = () => load(true);
+  $('#theme').onclick = () => {
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next; store.set('theme', next); render(); renderFinder();
+  };
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+}
+
+const savedTheme = store.get('theme', null);
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+if (window.Chart) { Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif'; Chart.defaults.font.size = 12; }
+bind();
+bindFinder();
+syncControls();
+if (STATIC) {
+  $('#fd-scan').onclick = staticScan;
+  $('#refresh').onclick = () => loadStatic();
+  $('#logout').onclick = e => { e.preventDefault(); forgetKey(); location.reload(); };
+  $('#login-form').onsubmit = staticLogin;
+  $('#loading').textContent = 'Загружаю…';
+  loadStatic();
+  setInterval(() => loadStatic(true), 10 * 60 * 1000);
+} else {
+  fdLoad();
+  load(false);
+  setInterval(() => load(false), 5 * 60 * 1000);
+}
+</script>
+</body>
+</html>
